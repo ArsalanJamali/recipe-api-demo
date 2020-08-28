@@ -6,7 +6,9 @@ from django.utils.translation import gettext as _
 
 class UserAdmin(BaseUserAdmin):
     ordering=['id']
-    list_display =['email','name']
+    list_display =['email','name','is_staff']
+    readonly_fields = ['date_joined',]
+    search_fields = ('email', 'name')
     fieldsets=(
         (
             None,
@@ -18,7 +20,7 @@ class UserAdmin(BaseUserAdmin):
         ),
         (
             _('Permissions'),
-            {'fields':('is_active','is_staff','is_superuser')}
+            {'fields':('is_active','is_staff','is_superuser','groups','user_permissions')}
         ),
         (
             _('Important dates'),
