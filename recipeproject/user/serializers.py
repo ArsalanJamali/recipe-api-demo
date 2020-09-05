@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model,authenticate
+from django.utils.translation import ugettext_lazy as _
 
 class UserApiSerializer(serializers.ModelSerializer):
 
@@ -19,11 +20,32 @@ class UserApiSerializer(serializers.ModelSerializer):
         return get_user_model().objects.create_user(**validated_data)
 
     def update(self,instance,validated_data):
-        instance.name=validated_data.get('name',instance.name)
-        instance.email=validated_data.get('email',instance.email)
-        instance.set_password(validated_data.get('password',instance.password))
-        instance.save()
-        return instance   
+        password=validated_data.pop('password',None)
+        user=super().update(instance,validated_data)
+
+        if password:
+            user.set_password(password)
+            user.save()
+
+        return user    
+
+
+class AuthTokenSerializer(serializers.Serializer):
+    email=serializers.CharField()
+    password=serializers.CharField(
+        style={'input_type':'password'},
+        trim_whitespace=False
+        )
+    
+    def validate(self,attrs):
+        email=attrs.get('email')
+        password=attrs.get('password')
+        user=authenticate(username=email,password=password)
+
+        if not user:
+            raise serializers.ValidationError(_("Username or password is incorrect"))
+        attrs['user']=user
+        return attrs
 
 
 
