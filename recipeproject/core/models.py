@@ -3,6 +3,17 @@ from django.contrib.auth.models import (AbstractBaseUser,BaseUserManager)
 from django.contrib.auth.models import PermissionsMixin
 from django.utils import timezone
 from django.conf import settings
+import os
+import uuid
+
+
+def recipe_image_file_path(instance,filename):
+
+    ext=filename.split('.')[-1]
+    filename="{}.{}".format(uuid.uuid4(),ext)
+    return os.path.join('uploads/recipe/',filename)
+
+
 
 class UserManager(BaseUserManager):
 
@@ -43,10 +54,41 @@ class Tag(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE)
 
+    class Meta:
+        ordering=['-pk']
+
     def __str__(self):
         return self.name
 
-        
+
+class Ingredient(models.Model):
+    name=models.CharField(max_length=255)
+    user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+
+    class Meta:
+        ordering=['-pk']
+
+    def __str__(self):
+        return self.name
+
+class Recipe(models.Model):
+    user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    title=models.CharField(max_length=255)
+    time_minutes=models.IntegerField()
+    price=models.DecimalField(max_digits=5,decimal_places=2)
+    link=models.URLField(max_length=200,blank=True)
+    ingredients=models.ManyToManyField(Ingredient)
+    tags=models.ManyToManyField(Tag)
+    image=models.ImageField(null=True,upload_to=recipe_image_file_path,blank=True)
+    
+
+    class Meta:
+        ordering=['-pk']
+
+    def __str__(self):
+        return self.title
+
+    
 
 
 
